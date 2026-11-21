@@ -1,0 +1,5 @@
+{
+  "games": [
+    { "id": "frlg", "name": "FireRed / LeafGreen", "generation": 3, "species": [1, 151] }
+  ]
+}
