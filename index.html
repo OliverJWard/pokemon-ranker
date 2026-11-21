@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Rank Pokémon by a custom base-stat formula, using the stats from the game you pick.">
+<meta name="theme-color" content="#12151A">
 <title>Field Ranker — Pokémon Stat Terminal</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -17,15 +19,15 @@
         <div class="subtitle" id="subtitle">Loading…</div>
       </div>
     </div>
-    <div class="count-readout">SHOWING<br><span class="n" id="shownCount">–</span> / <span id="totalCount">–</span></div>
+    <div class="count-readout" role="status" aria-label="Pokémon shown">SHOWING<br><span class="n" id="shownCount">–</span> / <span id="totalCount">–</span></div>
   </header>
 
   <div class="layout">
 
-    <div class="panel">
-      <h2>Score formula</h2>
-      <textarea id="formulaInput" class="formula-input" spellcheck="false">hp + atk + def + spa + spd + spe</textarea>
-      <div class="formula-status" id="formulaStatus">&nbsp;</div>
+    <details class="panel" id="panel" open>
+      <summary><h2>Score formula</h2><span class="current" id="currentFormula"></span></summary>
+      <textarea id="formulaInput" class="formula-input" aria-label="Score formula" aria-describedby="formulaStatus" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+      <div class="formula-status" id="formulaStatus" role="status">&nbsp;</div>
 
       <div class="chip-section">
         <div class="chip-label">Stats</div>
@@ -49,19 +51,20 @@
         <button class="textbtn" id="clearBtn">Clear</button>
         <button class="textbtn" id="resetBtn">Reset to BST</button>
       </div>
-    </div>
+    </details>
 
-    <div class="main">
+    <main class="main">
       <div class="results-head">
-        <input class="search-box" id="searchBox" type="text" placeholder="Search by name or type…">
-        <select class="sortdir" id="sortDir">
+        <label class="sr-only" for="searchBox">Search by name or type</label>
+        <input class="search-box" id="searchBox" type="search" placeholder="Search by name or type…" autocomplete="off">
+        <select class="sortdir" id="sortDir" aria-label="Sort order">
           <option value="desc">Highest first</option>
           <option value="asc">Lowest first</option>
         </select>
       </div>
-      <div class="list" id="list"></div>
+      <ol class="list" id="list" role="list"></ol>
       <footer>Tap a row for its full stat breakdown. Edit the formula anytime — nothing is precomputed.</footer>
-    </div>
+    </main>
 
   </div>
 </div>

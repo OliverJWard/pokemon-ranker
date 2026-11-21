@@ -2,14 +2,8 @@
 import { compileForRoster } from "./formula.mjs";
 import { rankRoster, filterRanked, barFraction } from "./ranking.mjs";
 import { PRESETS, DEFAULT_FORMULA, FUNCTION_SNIPPETS, COMBOS } from "./presets.mjs";
-
-const TYPE_COLORS = {
-  Normal: "#A8A77A", Fire: "#EE8130", Water: "#6390F0", Electric: "#F7D02C",
-  Grass: "#7AC74C", Ice: "#96D9D6", Fighting: "#C22E28", Poison: "#A33EA1",
-  Ground: "#E2BF65", Flying: "#A98FF3", Psychic: "#F95587", Bug: "#A6B91A",
-  Rock: "#B6A136", Ghost: "#735797", Dragon: "#6F35FC", Steel: "#B7B7CE",
-  Dark: "#705746", Fairy: "#D685AD",
-};
+import { TYPE_COLORS } from "./types.mjs";
+import { readableText } from "./color.mjs";
 
 const $ = (id) => document.getElementById(id);
 
@@ -58,12 +52,23 @@ function applyFormula() {
     state.scoreFn = compileForRoster($("formulaInput").value, state.statKeys, state.roster);
     status.textContent = "Valid — ranking live";
     status.className = "formula-status ok";
+    syncFormulaEverywhere();
   } catch (err) {
     // Keep ranking with the last valid formula; the status line explains why.
     status.textContent = "Not applied: " + err.message;
     status.className = "formula-status err";
   }
   render();
+}
+
+// The collapsed mobile panel shows the formula, and the URL makes it shareable.
+function syncFormulaEverywhere() {
+  const formula = $("formulaInput").value;
+  $("currentFormula").textContent = formula;
+  const url = new URL(location.href);
+  if (formula === DEFAULT_FORMULA) url.searchParams.delete("f");
+  else url.searchParams.set("f", formula);
+  history.replaceState(null, "", url);
 }
 
 function setFormula(src) {
@@ -100,37 +105,53 @@ function buildPanel() {
   $("list").addEventListener("click", (e) => {
     const row = e.target.closest(".row");
     if (!row) return;
+    // Update in place rather than re-rendering, so keyboard focus stays on the row.
     const id = Number(row.dataset.id);
-    state.openId = state.openId === id ? null : id;
-    render();
+    const opening = state.openId !== id;
+    $("list").querySelectorAll(".row[aria-expanded=true]").forEach(setExpanded.bind(null, false));
+    state.openId = opening ? id : null;
+    if (opening) setExpanded(true, row);
   });
 }
 
 // ---------- Results ----------
+function setExpanded(open, row) {
+  row.setAttribute("aria-expanded", String(open));
+  row.classList.toggle("open", open);
+  document.getElementById(row.getAttribute("aria-controls")).hidden = !open;
+}
+
 function typeBadge(t) {
-  return h("span", { className: "type-badge", textContent: t, style: { background: TYPE_COLORS[t] ?? "#888" } });
+  const bg = TYPE_COLORS[t] ?? "#888888";
+  return h("span", { className: "type-badge", textContent: t, style: { background: bg, color: readableText(bg) } });
 }
 
 function rowFor(entry, index, min, max) {
   const { p, score, rank } = entry;
-  const rankClass = rank <= 3 ? `r${rank}` : "";
   const open = state.openId === p.id;
-  const row = h("div", { className: `row${index === 0 ? " top1" : ""}${open ? " open" : ""}`, dataset: { id: p.id } },
-    h("div", { className: `rank ${rankClass}`, textContent: rank }),
-    h("div", { className: "name-cell" },
-      h("div", { className: "name-line" },
+  const detailsId = `stats-${p.id}`;
+  const row = h("button", {
+    className: `row${index === 0 ? " top1" : ""}${open ? " open" : ""}`,
+    type: "button",
+    dataset: { id: p.id },
+    "aria-expanded": String(open),
+    "aria-controls": detailsId,
+  },
+    h("span", { className: `rank${rank <= 3 ? ` r${rank}` : ""}`, textContent: rank }),
+    h("span", { className: "name-cell" },
+      h("span", { className: "name-line" },
         h("span", { className: "pname", textContent: p.name }),
         h("span", { className: "pnum", textContent: `#${String(p.id).padStart(3, "0")}` })),
-      h("div", { className: "types" }, p.types.map(typeBadge))),
-    h("div", { className: "bar-cell bar-track" },
-      h("div", { className: "bar-fill", style: { width: `${barFraction(score, min, max) * 100}%` } })),
-    h("div", { className: "score-cell", textContent: score.toFixed(1) }));
-  const breakdown = h("div", { className: "breakdown" },
+      h("span", { className: "types" }, p.types.map(typeBadge))),
+    h("span", { className: "bar-cell bar-track" },
+      h("span", { className: "bar-fill", style: { width: `${barFraction(score, min, max) * 100}%` } })),
+    h("span", { className: "score-cell", textContent: score.toFixed(1) }));
+  const breakdown = h("div", { className: "breakdown", id: detailsId, hidden: !open },
     h("div", { className: "stat-grid" },
       state.statKeys.map((k, i) => h("div", { className: "stat-chip" },
         h("div", { className: "v", textContent: p.stats[k] }),
         h("div", { className: "k", textContent: state.statLabels[i] })))));
-  return [row, breakdown];
+  return h("li", { className: "item" }, row, breakdown);
 }
 
 function render() {
@@ -143,10 +164,10 @@ function render() {
   $("shownCount").textContent = shown.length;
   const list = $("list");
   if (shown.length === 0) {
-    list.replaceChildren(h("div", { className: "empty", textContent: `No Pokémon match “${state.search.trim()}”.` }));
+    list.replaceChildren(h("li", { className: "empty", textContent: `No Pokémon match “${state.search.trim()}”.` }));
     return;
   }
-  list.replaceChildren(...shown.flatMap((e, i) => rowFor(e, i, min, max)));
+  list.replaceChildren(...shown.map((e, i) => rowFor(e, i, min, max)));
 }
 
 // ---------- Boot ----------
@@ -157,12 +178,14 @@ async function main() {
   state.statLabels = data.stats.map((s) => s.label);
   $("subtitle").textContent = `${game.name} · Generation ${game.generation} stats · scored by base stats`;
   $("totalCount").textContent = roster.length;
-  $("formulaInput").value = DEFAULT_FORMULA;
+  $("formulaInput").value = new URLSearchParams(location.search).get("f") ?? DEFAULT_FORMULA;
+  // On phones the panel starts collapsed so the rankings are visible immediately.
+  $("panel").open = matchMedia("(min-width: 861px)").matches;
   buildPanel();
   applyFormula();
 }
 
 main().catch((err) => {
   console.error(err);
-  $("list").replaceChildren(h("div", { className: "empty", role: "alert", textContent: `Failed to load data: ${err.message}. Serve the folder over HTTP (python3 -m http.server) rather than opening the file directly.` }));
+  $("list").replaceChildren(h("li", { className: "empty", role: "alert", textContent: `Failed to load data: ${err.message}. Serve the folder over HTTP (python3 -m http.server) rather than opening the file directly.` }));
 });
