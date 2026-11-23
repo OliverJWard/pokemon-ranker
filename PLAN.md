@@ -1,17 +1,17 @@
 # Plan: publish and extend Field Ranker
 
-State as of 2026-11-21: steps 1–3 and the README are committed locally on `main` (4 commits, 33 tests passing). **Nothing has been pushed**, and the repo `OliverJWard/pokemon-ranker` is still private.
+State as of 2026-11-23: published. Repo is public and live at https://oliverjward.github.io/pokemon-ranker/ (headless-Chrome smoke test passed at 390px and 1280px; not yet tried on a real phone). 33 tests passing.
 
-## 1. Publish (needs your go-ahead)
+## 1. Publish (done)
 
-- [ ] Decide whether you're comfortable with the data licence gap (see below).
-- [ ] `git push origin main`
-- [ ] `gh repo edit --visibility public --accept-visibility-change-consequences`
-- [ ] Enable GitHub Pages: Settings → Pages → deploy from `main`, folder `/ (root)`.
+- [x] Decide whether you're comfortable with the data licence gap (see below).
+- [x] `git push origin main`
+- [x] `gh repo edit --visibility public --accept-visibility-change-consequences`
+- [x] Enable GitHub Pages: Settings → Pages → deploy from `main`, folder `/ (root)`.
       Or: `gh api -X POST repos/OliverJWard/pokemon-ranker/pages -f "source[branch]=main" -f "source[path]=/"`
-- [ ] Wait for the build, then open `https://oliverjward.github.io/pokemon-ranker/`.
-- [ ] Check on the live link: rankings load, a row expands, `?f=spe` shares a formula, and there are no console errors on a phone.
-- [ ] Add the live link to the README.
+- [x] Wait for the build, then open `https://oliverjward.github.io/pokemon-ranker/`.
+- [x] Check on the live link: rankings load, a row expands, `?f=spe` shares a formula, and there are no console errors on a phone.
+- [x] Add the live link to the README.
 
 ### Data licence caveat
 PokeAPI gives no licence for its data. Its LICENSE.md is BSD and covers the code only, and its docs have no attribution or redistribution terms for the data. Pokémon names are Nintendo trademarks. The README says all this. If you want to reduce the risk, options are:

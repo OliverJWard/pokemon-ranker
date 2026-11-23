@@ -4,6 +4,8 @@ Rank Pokémon by a score formula you write yourself (e.g. `max(atk, spa)*2 + spe
 
 Features: live formula editing with presets, search by name or type, tied scores share a rank, per-Pokémon stat breakdown, keyboard accessible, works on phones. The formula is stored in the URL (`?f=...`), so you can share a ranking by copying the link.
 
+**Live:** https://oliverjward.github.io/pokemon-ranker/
+
 ## Run
 
 No install or build step. Serve the folder over HTTP (the app loads JSON, which browsers block from `file://`):
